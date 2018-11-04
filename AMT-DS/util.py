@@ -59,8 +59,9 @@ def getDocuments(fName):
    return sortedinstSentences
 
 
-def fileringSentences(fName):
-   with open(fName, 'r') as f:
+def fileringSentences(fName, lemm=True, stemm=True, stop=True):
+  print lemm, stemm, stop 
+  with open(fName, 'r') as f:
     for line in f:
      l = line.split(",")
      l2 = line.replace(l[0]+ ",",'')
@@ -68,10 +69,13 @@ def fileringSentences(fName):
      l3 = re.sub('[^A-Za-z0-9\ ]+', '', l3)
      l3 = l3.lower()
      if(line != "" and l3 != "") :
-       wLists = l3.split(" ")
-       filtered_sentence = [w for w in wLists if not w in stop_words]
-       filtered_sentence = [porter_stemmer.stem(w) for w in filtered_sentence]
-       filtered_sentence = [lemmatizer.lemmatizer(w) for w in filtered_sentence]
+       filtered_sentence = l3.split(" ")
+       if stop:
+          filtered_sentence = [w for w in filtered_sentence if not w in stop_words]
+       if stemm:
+       	  filtered_sentence = [porter_stemmer.stem(w) for w in filtered_sentence]
+       if lemm:
+	  filtered_sentence = [lemmatizer.lemmatize(w) for w in filtered_sentence]
        if len(filtered_sentence) > 0:
          print l[0]+ "," + " ".join(filtered_sentence)
 
