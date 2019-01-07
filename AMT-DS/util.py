@@ -8,6 +8,7 @@ import collections
 from collections import Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.stem.porter import PorterStemmer
+from nltk.stem.snowball import SnowballStemmer
 from sklearn.feature_extraction.text import CountVectorizer
 import collections
 from decimal import *
@@ -15,9 +16,11 @@ from itertools import islice
 from nltk.corpus import stopwords
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+import codecs
 
 lemmatizer = WordNetLemmatizer()
 porter_stemmer = PorterStemmer()
+
 stop_words = set(stopwords.words('english'))
 
 stop_words = set(stopwords.words('english'))
@@ -46,7 +49,8 @@ def getDocuments(fName):
      l = line.split(",")
      l2 = line.replace(l[0]+ ",",'')
      l3 = l2.replace('\n','')
-     l3 = re.sub('[^A-Za-z0-9\ ]+', '', l3)
+     #Need to use this instead of regex because of non-english characters
+     l3 = l3.translate(None,string.punctuation)#re.sub('[^A-Za-z0-9\ ]+', '', l3)
      l3 = l3.lower()
      if(line != "" and l3 != "") :
       if l[0] in instSentences.keys():
@@ -59,25 +63,30 @@ def getDocuments(fName):
    return sortedinstSentences
 
 
-def fileringSentences(fName, lemm=True, stemm=True, stop=True):
-  print lemm, stemm, stop 
-  with open(fName, 'r') as f:
-    for line in f:
-     l = line.split(",")
-     l2 = line.replace(l[0]+ ",",'')
-     l3 = l2.replace('\n','')
-     l3 = re.sub('[^A-Za-z0-9\ ]+', '', l3)
-     l3 = l3.lower()
-     if(line != "" and l3 != "") :
-       filtered_sentence = l3.split(" ")
-       if stop:
-          filtered_sentence = [w for w in filtered_sentence if not w in stop_words]
-       if stemm:
-       	  filtered_sentence = [porter_stemmer.stem(w) for w in filtered_sentence]
-       if lemm:
-	  filtered_sentence = [lemmatizer.lemmatize(w) for w in filtered_sentence]
-       if len(filtered_sentence) > 0:
-         print l[0]+ "," + " ".join(filtered_sentence)
+def fileringSentences(fName, lemm=True, stemm=True, stop=True,lan = "english"):
+  print lemm, stemm, stop
+  stemmer = SnowballStemmer(lan) 
+  with codecs.open(fName, 'r',encoding="utf-8") as f:
+    with codecs.open(lan+"_"+"_stemm_"+str(stemm)+"_stop_"+str(stop)+"_lemm_"+str(lemm)+".conf","w",encoding="utf-8") as write_file:
+    	for line in f:
+     		l = line.split(",")
+     		l2 = line.replace(l[0]+ ",",'')
+     		l3 = l2.replace('\n','')
+     		l3 = re.sub('[^A-Za-z0-9\ ]+', '', l3)
+     		l3 = l3.lower()
+     		if(line != "" and l3 != "") :
+       			filtered_sentence = l3.split(" ")
+       			if stop:
+          			filtered_sentence = [w for w in filtered_sentence if not w in stop_words]
+       			if stemm:
+	  			filtered_sentence = [stemmer.stem(w) for w in filtered_sentence]
+       	  			#filtered_sentence = [porter_stemmer.stem(w) for w in filtered_sentence]
+       			if lemm:
+	  			filtered_sentence = [lemmatizer.lemmatize(w) for w in filtered_sentence]
+       			if len(filtered_sentence) > 0:
+				out_string = l[0]+ "," + " ".join(filtered_sentence)
+				write_file.write(out_string+"\n")
+         			print out_string
 
 def filterUniqWords(fName,allWords):
    with open(fName, 'r') as f:
