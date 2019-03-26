@@ -23,10 +23,10 @@ import codecs
 lemmatizer = WordNetLemmatizer()
 porter_stemmer = PorterStemmer()
 
-stop_words = set(stopwords.words('english'))
+#stop_words = set(stopwords.words('english'))
 
-stop_words = set(stopwords.words('english'))
-
+#stop_words = set(stopwords.words('english'))
+stop_words = []
 fullAnnot = "fullAnnotation.conf"
 N = 10
 vectorizer = CountVectorizer()
@@ -35,7 +35,7 @@ tokenize = lambda doc: doc.lower().split(" ")
 def objectNames() :
   fullAnnotations = {}
   with open(fullAnnot,'r') as f:
-   for line in f:
+    for line in f:
       l = line.split(",")
       l2 = line.replace(l[0]+ ",",'')
       l3 = l2.replace('\n','')
@@ -66,7 +66,8 @@ def getDocuments(fName):
 
 
 def fileringSentences(fName, lemm=True, stemm=True, stop=True,lan = "english"):
-  stemmer = SnowballStemmer(lan)
+  if stemm:
+    stemmer = SnowballStemmer(lan)
   with codecs.open(fName, 'r',encoding="utf-8") as f:
     f_start = fName.replace(".conf","")
     ending = ""
@@ -80,29 +81,32 @@ def fileringSentences(fName, lemm=True, stemm=True, stop=True,lan = "english"):
         ending += "_raw"
     ending += ".conf"
     with codecs.open(f_start+ending,"w",encoding="utf-8") as write_file:
-    	for line in f:
-     		l = line.split(",")
-     		l2 = line.replace(l[0]+ ",",'')
-     		l3 = l2.replace("-"," ")
-     		#l3 = re.sub('[^A-Za-z0-9\ ]+', '', l3)
-            	for rem in ["\n","\t","\r",".","?","!",u'¿',u'¡']:
-                	l3 = l3.replace(rem,"")
-            	for pun in string.punctuation:
-			l3 = l3.replace(pun,"")
-     		l3 = l3.lower()
-     		if(line != "" and l3 != "") :
-       			filtered_sentence = l3.split(" ")
-       			if stop:
-          			filtered_sentence = [w for w in filtered_sentence if not w in stop_words]
-       			if stemm:
-	  			filtered_sentence = [stemmer.stem(w) for w in filtered_sentence]
-       	  			#filtered_sentence = [porter_stemmer.stem(w) for w in filtered_sentence]
-       			if lemm:
-	  			filtered_sentence = [lemmatizer.lemmatize(w) for w in filtered_sentence]
-       			if len(filtered_sentence) > 0:
-				out_string = l[0]+ "," + " ".join(filtered_sentence)
-				write_file.write(out_string+"\n")
-         			print out_string
+      for line in f:
+        l = line.split(",")
+        l2 = line.replace(l[0]+ ",",'')
+        l3 = l2.replace("-"," ")
+        #l3 = re.sub('[^A-Za-z0-9\ ]+', '', l3)
+        for rem in ["\n","\t","\r",".","?","!",u'¿',u'¡',u'।',u"\u0964","|"]:
+           l3 = l3.replace(rem,"")
+        for pun in string.punctuation:
+           l3 = l3.replace(pun,"")
+        l3 = l3.lower()
+        while "  " in l3:
+            l3 = l3.replace("  "," ")
+
+        if(line != "" and l3 != "") :
+            filtered_sentence = l3.split(" ")
+        if stop:
+            filtered_sentence = [w for w in filtered_sentence if not w in stop_words]
+        if stemm:
+            filtered_sentence = [stemmer.stem(w) for w in filtered_sentence]
+				#filtered_sentence = [porter_stemmer.stem(w) for w in filtered_sentence]
+        if lemm:
+            filtered_sentence = [lemmatizer.lemmatize(w) for w in filtered_sentence]
+        if len(filtered_sentence) > 0:
+            out_string = l[0]+ "," + " ".join(filtered_sentence)
+            write_file.write(out_string+"\n")
+            #print out_string
     print lan,lemm,stemm,stop
 
 def filterUniqWords(fName,allWords):
