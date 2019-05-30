@@ -16,12 +16,16 @@ import collections
 from decimal import *
 from itertools import islice
 from nltk.corpus import stopwords
-from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import codecs
 
+import sys
+reload(sys)  # This is a bit of a hack to avoid encoding errors
+sys.setdefaultencoding('UTF8')
+
 lemmatizer = WordNetLemmatizer()
 porter_stemmer = PorterStemmer()
+from hindi_stemmer import hi_stem
 
 #stop_words = set(stopwords.words('english'))
 
@@ -67,7 +71,8 @@ def getDocuments(fName):
 
 def fileringSentences(fName, lemm=True, stemm=True, stop=True,lan = "english"):
   if stemm:
-    stemmer = SnowballStemmer(lan)
+    if lan in ["spanish","english"]:
+        stemmer = SnowballStemmer(lan)
   with codecs.open(fName, 'r',encoding="utf-8") as f:
     f_start = fName.replace(".conf","")
     ending = ""
@@ -77,6 +82,8 @@ def fileringSentences(fName, lemm=True, stemm=True, stop=True,lan = "english"):
         ending += "_lemmed"
     if stop:
         ending += "_stop"
+        if lan in ["spanish","english"]:
+            stop_words = set(stopwords.words(lan))
     if not(stemm) and not(lemm):
         ending += "_raw"
     ending += ".conf"
@@ -99,8 +106,11 @@ def fileringSentences(fName, lemm=True, stemm=True, stop=True,lan = "english"):
         if stop:
             filtered_sentence = [w for w in filtered_sentence if not w in stop_words]
         if stemm:
-            filtered_sentence = [stemmer.stem(w) for w in filtered_sentence]
-				#filtered_sentence = [porter_stemmer.stem(w) for w in filtered_sentence]
+            if lan == "hindi":
+                filtered_sentence = [hi_stem(w) for w in filtered_sentence]
+            else:
+                filtered_sentence = [stemmer.stem(w) for w in filtered_sentence]
+				
         if lemm:
             filtered_sentence = [lemmatizer.lemmatize(w) for w in filtered_sentence]
         if len(filtered_sentence) > 0:
